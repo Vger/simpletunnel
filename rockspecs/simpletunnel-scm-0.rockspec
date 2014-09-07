@@ -18,7 +18,8 @@ build = {
   type = "none",
   install = {
     bin = {
-      ["simpletunnel.lua"] = "src/simpletunnel.lua",
+      ["tunendpoint.lua"] = "src/tunendpoint.lua",
+      ["tuntransfer.lua"] = "src/tuntransfer.lua",
     },
   },
 }
