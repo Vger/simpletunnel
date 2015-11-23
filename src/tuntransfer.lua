@@ -15,7 +15,7 @@ e.g.
   socket bound to 127.0.0.1:6001.
 --]]
 
-local zmq = require "zmq"
+local zmq = require "lzmq"
 local copas = require "copas"
 local zmqcopas = require "zmq.copas"
 local zmqctx
@@ -30,13 +30,8 @@ local function main_transfer(subskt, pushskt)
 end
 
 local function transfer(zmqctx, subaddr, pushaddr)
-    local subskt = zmqctx:socket(zmq.SUB)
-    assert(subskt:connect(subaddr))
-    assert(subskt:setopt(zmq.SUBSCRIBE, ""))
-
-    local pushskt = zmqctx:socket(zmq.PUSH)
-    assert(pushskt:connect(pushaddr))
-
+    local subskt = zmqctx:socket(zmq.SUB, {connect=subaddr, subscribe={""}})
+    local pushskt = zmqctx:socket(zmq.PUSH, {connect=pushaddr})
     return main_transfer(zmqcopas.wrap(subskt), zmqcopas.wrap(pushskt))
 end
 
@@ -54,7 +49,7 @@ local function init(pubaddr1, pulladdr1, pubaddr2, pulladdr2)
 	error("Second pull address omitted.")
     end
 
-    zmqctx = zmq.init(1)
+    zmqctx = zmq.context { io_threads = 1 }
 
     local thread1 = transfer(zmqctx, pubaddr1, pulladdr2)
     local thread2 = transfer(zmqctx, pubaddr2, pulladdr1)

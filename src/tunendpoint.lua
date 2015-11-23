@@ -13,7 +13,7 @@ e.g.
 --]]
 
 local tuntap = require "tuntap"
-local zmq = require "zmq"
+local zmq = require "lzmq"
 local zmqcopas = require "zmq.copas"
 local copas = require "copas"
 
@@ -45,17 +45,15 @@ local function init(iface_path, pub_addr, pull_addr)
     iface_path = iface_path or DEFAULT_IFACE_PATH
     pub_addr = pub_addr or DEFAULT_PUB_ADDR
     pull_addr = pull_addr or DEFAULT_PULL_ADDR
-    zmqctx = zmq.init(1)
+    zmqctx = zmq.context { io_threads = 1 }
 
-    local pull = zmqctx:socket(zmq.PULL)
-    assert(pull:bind(pull_addr))
-
-    local pub = zmqctx:socket(zmq.PUB)
-    assert(pub:bind(pub_addr))
+    local pull = zmqctx:socket(zmq.PULL, {bind=pull_addr})
+    local pub = zmqctx:socket(zmq.PUB, {bind=pub_addr})
 
     local tunnel = assert(tuntap.open(iface_path))
-
+    assert(tunnel:up())
     tunnel:settimeout(0)
+
     copas.addthread(publisher(tunnel, zmqcopas.wrap(pub)))
     copas.addthread(retriever(tunnel, zmqcopas.wrap(pull)))
 end
